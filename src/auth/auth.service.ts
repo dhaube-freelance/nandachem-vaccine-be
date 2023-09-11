@@ -35,7 +35,7 @@ export class AuthService {
       const { id, email, role, remember } = await this.jwtService.verifyAsync(
         prevRefreshToken,
         {
-          secret: process.env.ACCESS_TOKEN_SECRET,
+          secret: process.env.REFRESH_TOKEN_SECRET,
         },
       );
       return this.generateTokens({ id, email, role, remember }, remember);
