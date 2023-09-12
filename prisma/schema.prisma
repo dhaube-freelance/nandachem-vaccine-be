@@ -25,16 +25,39 @@ model User {
 }
 
 model Batch {
-  id     Int    @id @default(autoincrement())
-  number String @unique
+  id       Int       @id @default(autoincrement())
+  number   String    @unique
+  patients Patient[]
 }
 
 model Vaccine {
-  id     Int    @id @default(autoincrement())
-  number String @unique
+  id           Int     @id @default(autoincrement())
+  name         String  @unique
+  type         String?
+  manufacturer String?
+  doses        Int
+  gapsInDays   String?
+}
+
+model Patient {
+  id      Int     @id @default(autoincrement())
+  name    String
+  email   String
+  number  String
+  gender  Gender  @default(MALE)
+  state   String?
+  street  String?
+  batch   Batch   @relation(fields: [batchId], references: [id])
+  batchId Int
 }
 
 enum Role {
   ADMIN
   NORMAL
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHERS
 }
