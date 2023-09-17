@@ -25,30 +25,43 @@ model User {
 }
 
 model Batch {
-  id       Int       @id @default(autoincrement())
-  number   String    @unique
-  patients Patient[]
+  id         Int      @id @default(autoincrement())
+  number     String   @unique
+  expiryDate DateTime
+  vaccine    Vaccine?
+}
+
+model Dose {
+  id           Int     @id @default(autoincrement())
+  minAge       Int
+  maxAge       Int
+  numberOfDose Int
+  gapsInDays   String
+  Vaccine      Vaccine @relation(fields: [vaccineId], references: [id])
+  vaccineId    Int
 }
 
 model Vaccine {
-  id           Int     @id @default(autoincrement())
-  name         String  @unique
+  id           Int       @id @default(autoincrement())
+  name         String    @unique
   type         String?
   manufacturer String?
-  doses        Int
-  gapsInDays   String?
+  patients     Patient[]
+  doses        Dose[]
+  batch        Batch     @relation(fields: [batchId], references: [id])
+  batchId      Int       @unique
 }
 
 model Patient {
-  id      Int     @id @default(autoincrement())
-  name    String
-  email   String
-  number  String
-  gender  Gender  @default(MALE)
-  state   String?
-  street  String?
-  batch   Batch   @relation(fields: [batchId], references: [id])
-  batchId Int
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String?
+  number    String
+  gender    Gender   @default(MALE)
+  dob       DateTime
+  street    String?
+  vaccine   Vaccine  @relation(fields: [vaccineId], references: [id])
+  vaccineId Int
 }
 
 enum Role {

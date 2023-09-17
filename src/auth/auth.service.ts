@@ -18,8 +18,13 @@ export class AuthService {
   async signIn(email: string, password: string, remember?: boolean) {
     const user = await this.userService.findOne({ email });
 
-    if (!bcrypt.compareSync(password, user?.password))
-      throw new BadRequestException();
+    if (!user?.password || !bcrypt.compareSync(password, user?.password)) {
+      let errorMessage = 'incorrect username or password';
+
+      if (!user?.password) errorMessage = 'user not found';
+
+      throw new BadRequestException(errorMessage);
+    }
 
     const payload = {
       id: user.id,

@@ -35,5 +35,5 @@ export class CreatePatientDto {
 
   @IsNumber()
   @IsNotEmpty()
-  batchId: number;
+  vaccineId: number;
 }

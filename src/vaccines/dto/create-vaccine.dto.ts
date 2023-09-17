@@ -20,4 +20,8 @@ export class CreateVaccineDto {
   @IsString()
   @IsOptional()
   gapsInDays: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  batchId: number;
 }

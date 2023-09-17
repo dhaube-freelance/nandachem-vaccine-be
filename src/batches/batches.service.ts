@@ -9,7 +9,13 @@ export class BatchesService {
   constructor(private readonly prisma: PrismaService) {}
 
   create(data: CreateBatchDto) {
-    return this.prisma.batch.create({ data });
+    const { number, expiryDate } = data;
+    return this.prisma.batch.create({
+      data: {
+        number,
+        expiryDate: new Date(expiryDate),
+      },
+    });
   }
 
   findAll() {
