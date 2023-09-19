@@ -6,10 +6,24 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class VaccinesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
-  create(data: CreateVaccineDto) {
-    return this.prisma.vaccine.create({ data });
+  async create(data: CreateVaccineDto) {
+
+    const { name, type, manufacturer, doses } = data;
+
+    const newVaccine = await this.prisma.vaccine.create({
+      data: {
+        name, type, manufacturer, doses: {
+          createMany: {
+            data: doses
+          }
+        }
+      }
+    });
+
+
+    return newVaccine;
   }
 
   findAll() {
@@ -20,8 +34,25 @@ export class VaccinesService {
     return this.prisma.vaccine.findUnique({ where });
   }
 
-  update(where: Prisma.VaccineWhereUniqueInput, data: UpdateVaccineDto) {
-    return this.prisma.vaccine.update({ where, data });
+  async update(where: Prisma.VaccineWhereUniqueInput, data: UpdateVaccineDto) {
+    const { name, type, manufacturer, doses } = data;
+
+    const updatedVaccine = await this.prisma.vaccine.update({
+      where, data: {
+        name, type, manufacturer
+      }
+    });
+
+    for (let i = 0; i < doses.length; i++) {
+      await this.prisma.dose.update({
+        where: {
+          id: doses[i].id
+        }
+        , data: { ...doses[i] }
+      })
+    }
+
+    return updatedVaccine;
   }
 
   remove(where: Prisma.VaccineWhereUniqueInput) {

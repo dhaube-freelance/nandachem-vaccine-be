@@ -25,6 +25,11 @@ export class CreatePatientDto {
   })
   gender: 'MALE' | 'FEMALE' | 'OTHERS';
 
+
+  @IsString()
+  @IsNotEmpty()
+  dob: string;
+
   @IsString()
   @IsOptional()
   state?: string;

@@ -1,4 +1,25 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {  IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+
+class DoseDto {
+  @IsNumber()
+  @IsNotEmpty()
+  minAge: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  maxAge: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  numberOfDose: number;
+
+  @IsString()
+  @IsNotEmpty()
+  gapsInDays: string;
+}
+
 
 export class CreateVaccineDto {
   @IsString()
@@ -13,15 +34,8 @@ export class CreateVaccineDto {
   @IsOptional()
   manufacturer: string;
 
-  @IsNumber()
-  @IsNotEmpty()
-  doses: number;
-
-  @IsString()
-  @IsOptional()
-  gapsInDays: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  batchId: number;
+  @IsArray()
+  @ValidateNested({ each: true }) // Validate each item in the array
+  @Type(() => DoseDto) // Ensure proper class transformation
+  doses: DoseDto[];
 }

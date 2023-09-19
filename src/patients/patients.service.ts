@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { Prisma } from '@prisma/client';
@@ -6,10 +6,34 @@ import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class PatientsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   create(data: CreatePatientDto) {
-    return this.prisma.patient.create({ data });
+    const {
+      email,
+      name,
+      dob,
+      number,
+      gender,
+      street,
+      vaccineId
+    } = data;
+
+    if (isNaN(Date.parse(dob))) {
+      throw new BadRequestException('invalid date');
+    }
+
+    return this.prisma.patient.create({
+      data: {
+        email,
+        name,
+        dob: new Date(dob),
+        number,
+        gender,
+        street,
+        vaccineId,
+      },
+    });
   }
 
   findAll() {
