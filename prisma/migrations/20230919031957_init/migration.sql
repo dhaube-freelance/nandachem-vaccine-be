@@ -20,8 +20,23 @@ CREATE TABLE `Batch` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `number` VARCHAR(191) NOT NULL,
     `expiryDate` DATETIME(3) NOT NULL,
+    `vaccineId` INTEGER NOT NULL,
 
     UNIQUE INDEX `Batch_number_key`(`number`),
+    INDEX `Batch_vaccineId_idx`(`vaccineId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Dose` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `minAge` INTEGER NOT NULL,
+    `maxAge` INTEGER NOT NULL,
+    `numberOfDose` INTEGER NOT NULL,
+    `gapsInDays` VARCHAR(191) NOT NULL,
+    `vaccineId` INTEGER NOT NULL,
+
+    INDEX `Dose_vaccineId_idx`(`vaccineId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -31,12 +46,8 @@ CREATE TABLE `Vaccine` (
     `name` VARCHAR(191) NOT NULL,
     `type` VARCHAR(191) NULL,
     `manufacturer` VARCHAR(191) NULL,
-    `doses` INTEGER NOT NULL,
-    `gapsInDays` VARCHAR(191) NULL,
-    `batchId` INTEGER NOT NULL,
 
     UNIQUE INDEX `Vaccine_name_key`(`name`),
-    UNIQUE INDEX `Vaccine_batchId_key`(`batchId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -44,11 +55,13 @@ CREATE TABLE `Vaccine` (
 CREATE TABLE `Patient` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(191) NOT NULL,
-    `email` VARCHAR(191) NOT NULL,
+    `email` VARCHAR(191) NULL,
     `number` VARCHAR(191) NOT NULL,
     `gender` ENUM('MALE', 'FEMALE', 'OTHERS') NOT NULL DEFAULT 'MALE',
+    `dob` DATETIME(3) NOT NULL,
     `street` VARCHAR(191) NULL,
-    `vaccineId` INTEGER NOT NULL,
+    `vaccineId` INTEGER NULL,
 
+    INDEX `Patient_vaccineId_idx`(`vaccineId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

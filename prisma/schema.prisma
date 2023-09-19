@@ -28,7 +28,10 @@ model Batch {
   id         Int      @id @default(autoincrement())
   number     String   @unique
   expiryDate DateTime
-  vaccine    Vaccine?
+  vaccine    Vaccine  @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
+  vaccineId  Int
+
+  @@index([vaccineId])
 }
 
 model Dose {
@@ -37,8 +40,10 @@ model Dose {
   maxAge       Int
   numberOfDose Int
   gapsInDays   String
-  Vaccine      Vaccine @relation(fields: [vaccineId], references: [id])
+  vaccine      Vaccine @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
   vaccineId    Int
+
+  @@index([vaccineId])
 }
 
 model Vaccine {
@@ -48,8 +53,7 @@ model Vaccine {
   manufacturer String?
   patients     Patient[]
   doses        Dose[]
-  batch        Batch     @relation(fields: [batchId], references: [id])
-  batchId      Int       @unique
+  batch        Batch[]
 }
 
 model Patient {
@@ -60,8 +64,9 @@ model Patient {
   gender    Gender   @default(MALE)
   dob       DateTime
   street    String?
-  vaccine   Vaccine  @relation(fields: [vaccineId], references: [id])
-  vaccineId Int
+  vaccine   Vaccine? @relation(fields: [vaccineId], references: [id])
+  vaccineId Int?
+  @@index([vaccineId])
 }
 
 enum Role {

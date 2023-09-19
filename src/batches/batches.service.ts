@@ -9,18 +9,17 @@ export class BatchesService {
   constructor(private readonly prisma: PrismaService) {}
 
   create(data: CreateBatchDto) {
-    const { number, expiryDate } = data;
-
-    const newDate = new Date(expiryDate);
-
+    const { number, expiryDate , vaccineId} = data;
+    
     if (isNaN(Date.parse(expiryDate))) {
       throw new BadRequestException('invalid date');
     }
-
+    
     return this.prisma.batch.create({
       data: {
         number,
-        expiryDate: newDate,
+        expiryDate: new Date(expiryDate),
+        vaccineId,
       },
     });
   }
