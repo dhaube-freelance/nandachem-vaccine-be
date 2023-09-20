@@ -25,10 +25,11 @@ model User {
 }
 
 model Batch {
-  id         Int      @id @default(autoincrement())
-  number     String   @unique
+  id         Int       @id @default(autoincrement())
+  number     String    @unique
   expiryDate DateTime
-  vaccine    Vaccine  @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
+  patients   Patient[]
+  vaccine    Vaccine   @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
   vaccineId  Int
 
   @@index([vaccineId])
@@ -47,26 +48,28 @@ model Dose {
 }
 
 model Vaccine {
-  id           Int       @id @default(autoincrement())
-  name         String    @unique
+  id           Int     @id @default(autoincrement())
+  name         String  @unique
   type         String?
   manufacturer String?
-  patients     Patient[]
   doses        Dose[]
-  batch        Batch[]
+  batches      Batch[]
 }
 
 model Patient {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String?
-  number    String
-  gender    Gender   @default(MALE)
-  dob       DateTime
-  street    String?
-  vaccine   Vaccine? @relation(fields: [vaccineId], references: [id])
-  vaccineId Int?
-  @@index([vaccineId])
+  id                   Int      @id @default(autoincrement())
+  name                 String
+  email                String?
+  number               String
+  gender               Gender   @default(MALE)
+  dob                  DateTime
+  firstVaccinationDate DateTime @default(now())
+  dosesTaken Int @default(1)
+  street               String?
+  batch                Batch?   @relation(fields: [batchId], references: [id])
+  batchId              Int?
+
+  @@index([batchId])
 }
 
 enum Role {

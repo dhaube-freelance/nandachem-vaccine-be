@@ -25,6 +25,11 @@ export class PatientsController {
     return this.patientsService.findAll();
   }
 
+  @Get('/phone-number/:number')
+  findFromPhoneNumber(@Param('number') number: string) {
+    return this.patientsService.findFromPhoneNumber(number);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.patientsService.findOne({ id: +id });

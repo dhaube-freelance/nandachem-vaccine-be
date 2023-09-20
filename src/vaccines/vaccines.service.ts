@@ -30,6 +30,12 @@ export class VaccinesService {
     return this.prisma.vaccine.findMany();
   }
 
+  findAllWithBatches() {
+    return this.prisma.vaccine.findMany({include: {
+      batches: true
+    }});
+  }
+
   findOne(where: Prisma.VaccineWhereUniqueInput) {
     return this.prisma.vaccine.findUnique({ where });
   }
