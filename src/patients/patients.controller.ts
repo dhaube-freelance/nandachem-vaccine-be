@@ -10,6 +10,7 @@ import {
 import { PatientsService } from './patients.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
+import { CompleteDoseDto } from './dto/complete-dose.dto';
 
 @Controller('patients')
 export class PatientsController {
@@ -23,6 +24,16 @@ export class PatientsController {
   @Get()
   findAll() {
     return this.patientsService.findAll();
+  }
+
+  @Get('/phone-number/:number')
+  findFromPhoneNumber(@Param('number') number: string) {
+    return this.patientsService.findFromPhoneNumber(number);
+  }
+
+  @Post('/complete-dose')
+  completeDose(@Body() { id, dosesTaken }:CompleteDoseDto) {
+    return this.patientsService.completeDose(+id, dosesTaken);
   }
 
   @Get(':id')

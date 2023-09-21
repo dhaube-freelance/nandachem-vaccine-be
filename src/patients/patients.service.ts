@@ -1,23 +1,22 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
+import {
+  getVaccineOptions,
+} from './utils';
 
 @Injectable()
 export class PatientsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   create(data: CreatePatientDto) {
-    const {
-      email,
-      name,
-      dob,
-      number,
-      gender,
-      street,
-      vaccineId
-    } = data;
+    const { email, name, dob, number, gender, street, batchId } = data;
 
     if (isNaN(Date.parse(dob))) {
       throw new BadRequestException('invalid date');
@@ -31,7 +30,49 @@ export class PatientsService {
         number,
         gender,
         street,
-        vaccineId,
+        batchId,
+      },
+    });
+  }
+
+  async findFromPhoneNumber(number: string) {
+    const patient = await this.prisma.patient.findFirst({
+      where: {
+        number,
+      },
+      include: {
+        batch: {
+          include: {
+            vaccine: {
+              include: { doses: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!patient) {
+      throw new NotFoundException();
+    }
+
+    const { nextDose, vaccineOptions } = getVaccineOptions(patient);
+
+    return {
+      patient,
+      vaccine: patient.batch.vaccine,
+      batch: patient.batch,
+      nextDose,
+      vaccineOptions,
+    };
+  }
+
+  completeDose(id: number, dosesTaken: string | number) {
+    return this.prisma.patient.update({
+      where: {
+        id,
+      },
+      data: {
+        dosesTaken: Number(dosesTaken),
       },
     });
   }

@@ -12,7 +12,7 @@ export class CreatePatientDto {
   name: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   email: string;
 
   @IsString()
@@ -40,5 +40,5 @@ export class CreatePatientDto {
 
   @IsNumber()
   @IsNotEmpty()
-  vaccineId: number;
+  batchId: number;
 }

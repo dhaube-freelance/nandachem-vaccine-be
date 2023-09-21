@@ -25,6 +25,11 @@ export class VaccinesController {
     return this.vaccinesService.findAll();
   }
 
+  @Get('/with-batches')
+  findAllWithBatches() {
+    return this.vaccinesService.findAllWithBatches();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.vaccinesService.findOne({ id: +id });
