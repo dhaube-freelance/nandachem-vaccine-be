@@ -7,7 +7,9 @@ import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { max, calculateAge, calculateDaysDifference } from './utils';
+import {
+  getVaccineOptions,
+} from './utils';
 
 @Injectable()
 export class PatientsService {
@@ -53,66 +55,26 @@ export class PatientsService {
       throw new NotFoundException();
     }
 
-    const dob = patient.dob;
-    const age = calculateAge(dob.toString());
-
-    const doses = patient.batch.vaccine.doses;
-    const appropriateDoseCategory = doses.find(({ minAge, maxAge }) => {
-      return age >= minAge && age <= maxAge;
-    });
-
-    if (!appropriateDoseCategory) {
-      throw new BadRequestException(
-        'No appropriate dose found for given vaccine and user',
-      );
-    }
-
-    const daysSinceFirstDose = calculateDaysDifference(
-      patient.firstVaccinationDate.toString(),
-    );
-
-    const gapsInDays = appropriateDoseCategory?.gapsInDays?.split(',');
-    const currentDose = Number(patient.dosesTaken);
-
-    const nextDose = currentDose + 1;
-    let daysCounter = 0;
-    let expectedDose = nextDose;
-
-    for (let i = 0; i < gapsInDays.length; i++) {
-      if (Number(gapsInDays[i]) + daysCounter > daysSinceFirstDose) {
-        expectedDose = i + 1; // +1 because array index start from 0
-        break;
-      }
-      daysCounter = Number(gapsInDays[i]);
-    }
-
-    const vaccineOptions: {
-      number: number;
-      completed: boolean;
-      expected: boolean;
-    }[] = [];
-
-    const maxDoses = max([
-      expectedDose,
-      nextDose,
-      appropriateDoseCategory?.numberOfDose,
-    ]);
-
-    for (let j = 0; j < maxDoses; j++) {
-      const current = j + 1;
-      vaccineOptions.push({
-        number: current,
-        completed: current < nextDose,
-        expected: current === expectedDose,
-      });
-    }
+    const { nextDose, vaccineOptions } = getVaccineOptions(patient);
 
     return {
       patient,
       vaccine: patient.batch.vaccine,
       batch: patient.batch,
+      nextDose,
       vaccineOptions,
     };
+  }
+
+  completeDose(id: number, dosesTaken: string | number) {
+    return this.prisma.patient.update({
+      where: {
+        id,
+      },
+      data: {
+        dosesTaken: Number(dosesTaken),
+      },
+    });
   }
 
   findAll() {
