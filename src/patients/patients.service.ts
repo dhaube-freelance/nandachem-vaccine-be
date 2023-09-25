@@ -15,11 +15,15 @@ import {
 export class PatientsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: CreatePatientDto) {
+  create(data: CreatePatientDto, userId: number) {
     const { email, name, dob, number, gender, street, batchId } = data;
 
     if (isNaN(Date.parse(dob))) {
       throw new BadRequestException('invalid date');
+    }
+
+    if(!userId) {
+      throw new BadRequestException('invalid userId');
     }
 
     return this.prisma.patient.create({
@@ -30,6 +34,7 @@ export class PatientsService {
         number,
         gender,
         street,
+        userId,
         batchId,
       },
     });
