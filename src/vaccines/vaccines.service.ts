@@ -6,22 +6,23 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class VaccinesService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateVaccineDto) {
-
     const { name, type, manufacturer, doses } = data;
 
     const newVaccine = await this.prisma.vaccine.create({
       data: {
-        name, type, manufacturer, doses: {
+        name,
+        type,
+        manufacturer,
+        doses: {
           createMany: {
-            data: doses
-          }
-        }
-      }
+            data: doses,
+          },
+        },
+      },
     });
-
 
     return newVaccine;
   }
@@ -31,9 +32,31 @@ export class VaccinesService {
   }
 
   findAllWithBatches() {
-    return this.prisma.vaccine.findMany({include: {
-      batches: true
-    }});
+    return this.prisma.vaccine.findMany({
+      include: {
+        batches: true,
+      },
+    });
+  }
+
+  async findAllWithDoseCount() {
+    const _vaccines = await this.prisma.vaccine.findMany({
+      include: {
+        doses: true,
+      },
+    });
+
+    const vaccinesWithDoseCount = [];
+
+    _vaccines.forEach(({ id, name, doses }) => {
+      let max = 1;
+      doses.forEach(({ numberOfDose }) => {
+        if (numberOfDose > max) max = numberOfDose;
+      });
+      vaccinesWithDoseCount.push({ id, name, maxNumberOfDose: max });
+    });
+
+    return vaccinesWithDoseCount;
   }
 
   findOne(where: Prisma.VaccineWhereUniqueInput) {
@@ -44,18 +67,21 @@ export class VaccinesService {
     const { name, type, manufacturer, doses } = data;
 
     const updatedVaccine = await this.prisma.vaccine.update({
-      where, data: {
-        name, type, manufacturer
-      }
+      where,
+      data: {
+        name,
+        type,
+        manufacturer,
+      },
     });
 
     for (let i = 0; i < doses.length; i++) {
       await this.prisma.dose.update({
         where: {
-          id: doses[i].id
-        }
-        , data: { ...doses[i] }
-      })
+          id: doses[i].id,
+        },
+        data: { ...doses[i] },
+      });
     }
 
     return updatedVaccine;

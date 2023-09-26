@@ -30,6 +30,11 @@ export class VaccinesController {
     return this.vaccinesService.findAllWithBatches();
   }
 
+  @Get('/with-dose-count')
+  findAllWithDoseCount() {
+    return this.vaccinesService.findAllWithDoseCount();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.vaccinesService.findOne({ id: +id });

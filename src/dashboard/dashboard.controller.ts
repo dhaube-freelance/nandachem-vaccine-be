@@ -15,7 +15,7 @@ import { AnalyticsDto } from './dto/analytics.dto';
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
-  @Get('doses-completion')
+  @Get('dose-completion')
   getDoseCompletion(@Query('vaccineId') vaccineId: string, @Request() req) {
     if (!vaccineId) {
       throw new BadRequestException();
@@ -27,8 +27,8 @@ export class DashboardController {
     );
   }
 
-  @Get('doses-count')
-  getDoseCounts(@Query('vaccineIdk') vaccineId: string, @Request() req) {
+  @Get('dose-count')
+  getDoseCounts(@Query('vaccineId') vaccineId: string, @Request() req) {
     if (!vaccineId) {
       throw new BadRequestException();
     }
@@ -36,7 +36,7 @@ export class DashboardController {
     return this.dashboardService.getDoseCounts(+vaccineId, Number(req.user.id));
   }
 
-  @Get('doses-analytics')
+  @Get('dose-analytics')
   getDoseAnalytics(@Query() query: AnalyticsDto, @Request() req) {
     const { vaccineId, doseNumber, type = 'MONTH' } = query;
 

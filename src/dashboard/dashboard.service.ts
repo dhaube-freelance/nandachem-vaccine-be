@@ -129,7 +129,7 @@ export class DashboardService {
     for (let i = 0; i < analyticsCount; i++) {
       const today = new Date();
 
-      const _gte =
+      const _gt =
         type === 'MONTH'
           ? new Date(today.getFullYear(), today.getMonth() - i - 1, 0)
           : new Date(
@@ -138,7 +138,7 @@ export class DashboardService {
               today.getDate() - today.getDay() - (i + 1) * 7, // - today.getDay() for start of the week i.e. Sunday
             );
 
-      const _lt =
+      const _lte =
         type === 'MONTH'
           ? new Date(today.getFullYear(), today.getMonth() - i, 0)
           : new Date(
@@ -153,8 +153,8 @@ export class DashboardService {
             batch: { vaccineId: vaccine.id },
             firstVaccinationDate: {
               // today's record doesn't count. but the record from a month ago counts
-              gte: _gte.toISOString(),
-              lt: _lt.toISOString(),
+              gt: _gt.toISOString(),
+              lte: _lte.toISOString(),
             },
             dosesTaken: doseNumber,
             userId,
