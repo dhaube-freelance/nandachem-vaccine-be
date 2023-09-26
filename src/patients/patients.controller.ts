@@ -6,19 +6,23 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Request, 
 } from '@nestjs/common';
 import { PatientsService } from './patients.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { CompleteDoseDto } from './dto/complete-dose.dto';
+import { NormalGuard } from 'src/auth/normal.guard';
 
 @Controller('patients')
+@UseGuards(NormalGuard)
 export class PatientsController {
   constructor(private readonly patientsService: PatientsService) {}
 
   @Post()
-  create(@Body() createPatientDto: CreatePatientDto) {
-    return this.patientsService.create(createPatientDto);
+  create(@Body() createPatientDto: CreatePatientDto, @Request() req) {
+    return this.patientsService.create(createPatientDto, req.user.id);
   }
 
   @Get()

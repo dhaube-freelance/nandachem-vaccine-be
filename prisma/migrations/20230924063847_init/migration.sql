@@ -8,8 +8,8 @@ CREATE TABLE `User` (
     `description` VARCHAR(191) NULL,
     `state` VARCHAR(191) NULL,
     `street` VARCHAR(191) NULL,
-    `role` ENUM('ADMIN', 'NORMAL') NOT NULL DEFAULT 'NORMAL',
     `verified` BOOLEAN NOT NULL DEFAULT false,
+    `role` ENUM('ADMIN', 'NORMAL') NOT NULL DEFAULT 'NORMAL',
 
     UNIQUE INDEX `User_email_key`(`email`),
     PRIMARY KEY (`id`)
@@ -59,9 +59,13 @@ CREATE TABLE `Patient` (
     `number` VARCHAR(191) NOT NULL,
     `gender` ENUM('MALE', 'FEMALE', 'OTHERS') NOT NULL DEFAULT 'MALE',
     `dob` DATETIME(3) NOT NULL,
+    `firstVaccinationDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `dosesTaken` INTEGER NOT NULL DEFAULT 1,
     `street` VARCHAR(191) NULL,
-    `vaccineId` INTEGER NULL,
+    `userId` INTEGER NOT NULL,
+    `batchId` INTEGER NULL,
 
-    INDEX `Patient_vaccineId_idx`(`vaccineId`),
+    INDEX `Patient_batchId_idx`(`batchId`),
+    INDEX `Patient_userId_idx`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
