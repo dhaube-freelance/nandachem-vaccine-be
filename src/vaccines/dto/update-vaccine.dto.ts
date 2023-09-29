@@ -3,7 +3,7 @@ import { CreateVaccineDto } from './create-vaccine.dto';
 import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-class DoseDto {
+class AgeGroupDto {
     @IsNumber()
     @IsNotEmpty()
     id: number;
@@ -27,7 +27,7 @@ class DoseDto {
 export class UpdateVaccineDto extends PartialType(CreateVaccineDto) {
     @IsArray()
     @ValidateNested({ each: true }) // Validate each item in the array
-    @Type(() => DoseDto) // Ensure proper class transformation
+    @Type(() => AgeGroupDto) // Ensure proper class transformation
     @IsOptional()
-    doses?: DoseDto[];
+    ageGroups?: AgeGroupDto[];
 }

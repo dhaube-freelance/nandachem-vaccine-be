@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -8,82 +8,80 @@ export class DashboardService {
   async getDoseCompletion(vaccineId: number, userId: number) {
     const vaccine = await this.prisma.vaccine.findUnique({
       where: { id: vaccineId },
-      include: { doses: true },
+      include: { ageGroups: true },
     });
 
-    const doses = vaccine.doses;
+    const ageGroups = vaccine.ageGroups;
 
-    if (!doses || !doses.length) {
-      throw new BadRequestException('could not find doses for given vaccine');
+    if (!ageGroups || !ageGroups.length) {
+      throw new NotFoundException('could not find doses for given vaccine');
     }
 
     let completed = 0;
     let total = 0;
 
-    for (let i = 0; i < doses.length; i++) {
-      const { minAge, maxAge, numberOfDose } = doses[i];
+    for (let i = 0; i < ageGroups.length; i++) {
+      const { minAge, maxAge, numberOfDose } = ageGroups[i];
       const today = new Date();
-      const _totalPatients = await this.prisma.patient.count({
+      const lastYear = new Date(
+        today.getFullYear() - 1,
+        today.getMonth(),
+        today.getDate(),
+      );
+
+      // TODO: check this value
+      const _totalRecords = await this.prisma.patientVaccine.groupBy({
+        by: ['patientId', 'vaccineId'],
         where: {
-          batch: { vaccineId: vaccine.id },
-          dob: {
-            gt: new Date(
-              today.getFullYear() - maxAge,
-              today.getMonth(),
-              today.getDate(),
-            ).toISOString(),
-            lt: new Date(
-              today.getFullYear() - minAge,
-              today.getMonth(),
-              today.getDate(),
-            ).toISOString(),
+          date: {
+            gte: lastYear,
+          },
+          vaccineId: vaccine.id,
+          age: {
+            gte: minAge,
+            lte: maxAge,
           },
           userId,
         },
       });
-      const _completedPatients = await this.prisma.patient.count({
+
+      const _completedPatients = await this.prisma.patientVaccine.count({
         where: {
-          dosesTaken: numberOfDose,
-          batch: { vaccineId: vaccine.id },
-          dob: {
-            gte: new Date(
-              today.getFullYear() - maxAge,
-              today.getMonth(),
-              today.getDate(),
-            ).toISOString(),
-            lte: new Date(
-              today.getFullYear() - minAge,
-              today.getMonth(),
-              today.getDate(),
-            ).toISOString(),
+          date: {
+            gte: lastYear,
+          },
+          doseNumber: numberOfDose,
+          vaccineId: vaccine.id,
+          age: {
+            gte: minAge,
+            lte: maxAge,
           },
           userId,
         },
       });
 
       completed += _completedPatients;
-      total += _totalPatients;
+      total += _totalRecords.length;
     }
 
     return { completed, total };
   }
 
-  // TODO: Add dates for the doses update and fix the counts
   async getDoseCounts(vaccineId: number, userId: number) {
     const vaccine = await this.prisma.vaccine.findUnique({
       where: { id: vaccineId },
-      include: { doses: true },
+      include: { ageGroups: true },
     });
 
-    const doses = vaccine.doses;
+    const ageGroups = vaccine.ageGroups;
 
-    if (!doses || !doses.length) {
-      throw new BadRequestException('could not find doses for given vaccine');
+    if (!ageGroups || !ageGroups.length) {
+      throw new NotFoundException('could not find doses for given vaccine');
     }
 
     let maxDose = 0;
 
-    doses.forEach(({ numberOfDose }) => {
+    ageGroups.forEach(({ numberOfDose }) => {
       if (numberOfDose > maxDose) {
         maxDose = numberOfDose;
       }
@@ -93,19 +91,14 @@ export class DashboardService {
 
     for (let i = 1; i <= maxDose; i++) {
       count.push(
-        await this.prisma.patient.count({
+        await this.prisma.patientVaccine.count({
           where: {
-            batch: { vaccineId: vaccine.id },
-            dosesTaken: i,
+            vaccineId,
+            doseNumber: i,
             userId,
           },
         }),
       );
-    }
-
-    for (let i = count.length - 1; i >= 0; i--) {
-      if (i === count.length - 1) continue;
-      count[i] = count[i] + count[i + 1];
     }
 
     return count;
@@ -117,46 +110,48 @@ export class DashboardService {
     type: 'WEEK' | 'MONTH',
     userId: number,
   ) {
-    const analyticsCount = 6;
+    const ANALYTICS_COUNT = 6;
 
     const vaccine = await this.prisma.vaccine.findUnique({
       where: { id: vaccineId },
-      include: { doses: true },
     });
+
+    if (!vaccine) {
+      throw new NotFoundException('vaccine not found');
+    }
 
     const counts: number[] = [];
 
-    for (let i = 0; i < analyticsCount; i++) {
+    for (let i = 1; i <= ANALYTICS_COUNT; i++) {
       const today = new Date();
 
-      const _gt =
+      const _gte =
         type === 'MONTH'
-          ? new Date(today.getFullYear(), today.getMonth() - i - 1, 0)
+          ? new Date(today.getFullYear(), today.getMonth() - i, 1)
           : new Date(
               today.getFullYear(),
               today.getMonth(),
-              today.getDate() - today.getDay() - (i + 1) * 7, // - today.getDay() for start of the week i.e. Sunday
+              today.getDate() - today.getDay() - (i * 7), // - today.getDay() for start of the week i.e. Sunday
             );
 
       const _lte =
         type === 'MONTH'
-          ? new Date(today.getFullYear(), today.getMonth() - i, 0)
+          ? new Date(today.getFullYear(), today.getMonth(), 0) // 0 will make the last day of previous month
           : new Date(
               today.getFullYear(),
               today.getMonth(),
-              today.getDate() - today.getDay() - i * 7, 
+              today.getDate() - today.getDay() - ((i - 1) * 7),
             );
 
       counts.push(
-        await this.prisma.patient.count({
+        await this.prisma.patientVaccine.count({
           where: {
-            batch: { vaccineId: vaccine.id },
-            firstVaccinationDate: {
-              // today's record doesn't count. but the record from a month ago counts
-              gt: _gt.toISOString(),
-              lte: _lte.toISOString(),
+            vaccineId: vaccine.id,
+            date: {
+              gte: _gte,
+              lte: _lte,
             },
-            dosesTaken: doseNumber,
+            doseNumber,
             userId,
           },
         }),

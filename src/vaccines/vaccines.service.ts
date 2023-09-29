@@ -9,16 +9,16 @@ export class VaccinesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateVaccineDto) {
-    const { name, type, manufacturer, doses } = data;
+    const { name, type, manufacturer, ageGroups } = data;
 
     const newVaccine = await this.prisma.vaccine.create({
       data: {
         name,
         type,
         manufacturer,
-        doses: {
+        ageGroups: {
           createMany: {
-            data: doses,
+            data: ageGroups,
           },
         },
       },
@@ -42,15 +42,15 @@ export class VaccinesService {
   async findAllWithDoseCount() {
     const _vaccines = await this.prisma.vaccine.findMany({
       include: {
-        doses: true,
+        ageGroups: true,
       },
     });
 
     const vaccinesWithDoseCount = [];
 
-    _vaccines.forEach(({ id, name, doses }) => {
+    _vaccines.forEach(({ id, name, ageGroups }) => {
       let max = 1;
-      doses.forEach(({ numberOfDose }) => {
+      ageGroups.forEach(({ numberOfDose }) => {
         if (numberOfDose > max) max = numberOfDose;
       });
       vaccinesWithDoseCount.push({ id, name, maxNumberOfDose: max });
@@ -64,7 +64,7 @@ export class VaccinesService {
   }
 
   async update(where: Prisma.VaccineWhereUniqueInput, data: UpdateVaccineDto) {
-    const { name, type, manufacturer, doses } = data;
+    const { name, type, manufacturer, ageGroups } = data;
 
     const updatedVaccine = await this.prisma.vaccine.update({
       where,
@@ -75,12 +75,12 @@ export class VaccinesService {
       },
     });
 
-    for (let i = 0; i < doses.length; i++) {
-      await this.prisma.dose.update({
+    for (let i = 0; i < ageGroups.length; i++) {
+      await this.prisma.ageGroup.update({
         where: {
-          id: doses[i].id,
+          id: ageGroups[i].id,
         },
-        data: { ...doses[i] },
+        data: { ...ageGroups[i] },
       });
     }
 

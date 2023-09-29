@@ -32,11 +32,12 @@ export class CreatePatientDto {
 
   @IsString()
   @IsOptional()
-  state?: string;
-
-  @IsString()
-  @IsOptional()
   street?: string;
+
+
+  @IsNumber()
+  @IsNotEmpty()
+  vaccineId: number;
 
   @IsNumber()
   @IsNotEmpty()

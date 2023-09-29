@@ -1,52 +1,33 @@
-import { Batch, Dose, Patient, Vaccine } from '@prisma/client';
-import { calculateAge, calculateDaysDifference, max } from '.';
-import { BadRequestException } from '@nestjs/common';
+import {
+  AgeGroup,
+  Patient,
+  PatientVaccine,
+} from '@prisma/client';
+import { calculateDaysDifference } from '.';
 
-export const getVaccineOptions = (
-  patient: Patient & {
-    batch: Batch & { vaccine: Vaccine & { doses: Dose[] } };
-  },
+export const getVaccineOptions = async (
+  record: PatientVaccine & { patient: Patient } & {ageGroup: AgeGroup},
 ) => {
-  const dob = patient.dob;
-  const age = calculateAge(dob.toString());
-
-  const doses = patient.batch.vaccine.doses;
-  const appropriateDoseCategory = doses.find(({ minAge, maxAge }) => {
-    return age >= minAge && age <= maxAge;
-  });
-
-  if (!appropriateDoseCategory) {
-    throw new BadRequestException(
-      'No appropriate dose found for given vaccine and user',
-    );
-  }
-
-  const daysSinceFirstDose = calculateDaysDifference(
-    patient.firstVaccinationDate.toString(),
+  const daysSinceLastDose = calculateDaysDifference(
+    record.date.toString()
   );
 
-  const gapsInDays = appropriateDoseCategory?.gapsInDays?.split(',');
-  const currentDose = Number(patient.dosesTaken);
+  const gapsInDays = record.ageGroup.gapsInDays?.split(',');
+  const currentDose = Number(record.doseNumber);
+  const currentGap = Number(gapsInDays[currentDose - 1]); // - 1 since array start from 0
 
   const nextDose = currentDose + 1;
-  let daysCounter = 0;
-  let expectedDose = nextDose;
+  let expected = false;
   let overdue = false;
 
-  for (let i = 0; i < gapsInDays.length; i++) {
-    if (Number(gapsInDays[i]) + daysCounter > daysSinceFirstDose) {
-      expectedDose = i + 1; // +1 because array index start from 0
-      if(expectedDose > nextDose) overdue = true;
-      break;
-    }
-    daysCounter = Number(gapsInDays[i]);
-
-    if (i === gapsInDays.length - 1) {
-      // last entry, it means overdue
-      expectedDose = i + 1 + 1;
-      overdue = true;
-    }
+  if(currentGap - 15 < daysSinceLastDose) {
+    expected = true;
   }
+
+  if(currentGap + 15 < daysSinceLastDose)  {
+    overdue = true;
+  }
+
 
   const vaccineOptions: {
     number: number;
@@ -55,18 +36,12 @@ export const getVaccineOptions = (
     overdue: boolean;
   }[] = [];
 
-  const maxDoses =
-    appropriateDoseCategory?.numberOfDose < max([expectedDose, nextDose])
-      ? appropriateDoseCategory?.numberOfDose
-      : max([expectedDose, nextDose]);
-
-  for (let j = 0; j < maxDoses; j++) {
-    const current = j + 1;
+  for (let i = 1; i <= record.ageGroup.numberOfDose; i++) {
     vaccineOptions.push({
-      number: current,
-      completed: current < nextDose,
-      expected: current === expectedDose,
-      overdue: current >= nextDose && overdue,
+      number: i,
+      completed: i < nextDose,
+      expected: i === nextDose && expected,
+      overdue: i === nextDose && overdue,
     });
   }
 

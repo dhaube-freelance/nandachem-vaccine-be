@@ -22,57 +22,77 @@ model User {
   street      String?
   verified    Boolean   @default(false)
   role        Role      @default(NORMAL)
-  patients    Patient[]
+  patients    PatientVaccine[]
 }
 
 model Batch {
-  id         Int       @id @default(autoincrement())
-  number     String    @unique
-  expiryDate DateTime
-  patients   Patient[]
-  vaccine    Vaccine   @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
-  vaccineId  Int
+  id             Int              @id @default(autoincrement())
+  number         String           @unique
+  expiryDate     DateTime
+  vaccine        Vaccine          @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
+  vaccineId      Int
+  patients PatientVaccine[]
 
   @@index([vaccineId])
 }
 
-model Dose {
-  id           Int     @id @default(autoincrement())
-  minAge       Int
-  maxAge       Int
-  numberOfDose Int
-  gapsInDays   String
-  vaccine      Vaccine @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
-  vaccineId    Int
+model AgeGroup {
+  id             Int              @id @default(autoincrement())
+  minAge         Int
+  maxAge         Int
+  numberOfDose   Int
+  gapsInDays     String
+  vaccine        Vaccine          @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
+  vaccineId      Int
+  patients PatientVaccine[]
 
   @@index([vaccineId])
 }
 
 model Vaccine {
-  id           Int     @id @default(autoincrement())
-  name         String  @unique
+  id           Int              @id @default(autoincrement())
+  name         String           @unique
   type         String?
   manufacturer String?
-  doses        Dose[]
+  ageGroups     AgeGroup[]
   batches      Batch[]
+  patients     PatientVaccine[]
 }
 
 model Patient {
-  id                   Int      @id @default(autoincrement())
-  name                 String
-  email                String?
-  number               String
-  gender               Gender   @default(MALE)
-  dob                  DateTime
-  firstVaccinationDate DateTime @default(now())
-  dosesTaken           Int      @default(1)
-  street               String?
-  user                 User     @relation(fields: [userId], references: [id])
-  userId               Int
-  batch                Batch?   @relation(fields: [batchId], references: [id])
-  batchId              Int?
+  id       Int              @id @default(autoincrement())
+  name     String
+  email    String?
+  number   String
+  gender   Gender           @default(MALE)
+  dob      DateTime
+  street   String?
+  userId   Int
+  vaccines PatientVaccine[]
 
+  @@index([userId])
+}
+
+model PatientVaccine {
+  id         Int      @id @default(autoincrement())
+  date       DateTime
+  doseNumber Int
+  age        Int
+  vaccine    Vaccine  @relation(fields: [vaccineId], references: [id])
+  vaccineId  Int
+  batch      Batch    @relation(fields: [batchId], references: [id])
+  batchId    Int
+  ageGroup   AgeGroup @relation(fields: [ageGroupId], references: [id])
+  ageGroupId Int
+  patient    Patient  @relation(fields: [patientId], references: [id])
+  patientId  Int
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+
+  @@index([vaccineId])
   @@index([batchId])
+  @@index([ageGroupId])
+  @@index([patientId])
   @@index([userId])
 }
 

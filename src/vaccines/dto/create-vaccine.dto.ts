@@ -2,7 +2,7 @@ import {  IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } 
 import { Type } from 'class-transformer';
 
 
-class DoseDto {
+class AgeGroupDto {
   @IsNumber()
   @IsNotEmpty()
   minAge: number;
@@ -36,6 +36,6 @@ export class CreateVaccineDto {
 
   @IsArray()
   @ValidateNested({ each: true }) // Validate each item in the array
-  @Type(() => DoseDto) // Ensure proper class transformation
-  doses: DoseDto[];
+  @Type(() => AgeGroupDto) // Ensure proper class transformation
+  ageGroups: AgeGroupDto[];
 }

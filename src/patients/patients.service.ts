@@ -7,24 +7,27 @@ import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import {
-  getVaccineOptions,
-} from './utils';
+import { getAgeGroup, getVaccineOptions } from './utils';
+import { CompleteDoseDto } from './dto/complete-dose.dto';
 
 @Injectable()
 export class PatientsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: CreatePatientDto, userId: number) {
-    const { email, name, dob, number, gender, street, batchId } = data;
+  async create(data: CreatePatientDto, userId: number) {
+    const { email, name, dob, number, gender, street, vaccineId, batchId } =
+      data;
 
     if (isNaN(Date.parse(dob))) {
       throw new BadRequestException('invalid date');
     }
 
-    if(!userId) {
+    if (!userId) {
       throw new BadRequestException('invalid userId');
     }
+
+    
+    const {age, ageGroupId} = await getAgeGroup(this.prisma, vaccineId, dob)
 
     return this.prisma.patient.create({
       data: {
@@ -35,49 +38,75 @@ export class PatientsService {
         gender,
         street,
         userId,
-        batchId,
+        vaccines: {
+          create: {
+            date: new Date(),
+            doseNumber: 1,
+            vaccineId,
+            batchId,
+            userId,
+            age,
+            ageGroupId
+          },
+        },
       },
     });
   }
 
   async findFromPhoneNumber(number: string) {
-    const patient = await this.prisma.patient.findFirst({
+    const records = await this.prisma.patientVaccine.findMany({
       where: {
-        number,
+        patient: {
+          number
+        },
       },
       include: {
-        batch: {
+        ageGroup: true,
+        patient: true,
+        batch: true,
+        vaccine: {
           include: {
-            vaccine: {
-              include: { doses: true },
-            },
-          },
-        },
+            ageGroups: true
+          }
+        }
       },
     });
 
-    if (!patient) {
-      throw new NotFoundException();
+    if (!records || !records.length) {
+      throw new NotFoundException('record not found');
     }
 
-    const { nextDose, vaccineOptions } = getVaccineOptions(patient);
+    let latestRecord = records[0];
+
+    records.forEach(record => {
+      if(record.doseNumber > latestRecord.doseNumber) {
+        latestRecord = record;
+      }
+    })
+
+    const { nextDose, vaccineOptions } = await getVaccineOptions( latestRecord)
 
     return {
-      patient,
-      vaccine: patient.batch.vaccine,
-      batch: patient.batch,
+      latestRecord,
       nextDose,
       vaccineOptions,
     };
   }
 
-  completeDose(id: number, dosesTaken: string | number) {
-    return this.prisma.patient.update({
-      where: {
-        id,
-      },
+  async completeDose({dob, doseNumber, batchId, patientId, vaccineId }: CompleteDoseDto, userId: number) {
+    
+    const {age, ageGroupId} = await getAgeGroup(this.prisma, vaccineId, dob);
+    
+    return this.prisma.patientVaccine.create({
       data: {
-        dosesTaken: Number(dosesTaken),
+        age,
+        date: new Date(),
+        doseNumber,
+        ageGroupId,
+        batchId,
+        patientId,
+        vaccineId,
+        userId,
       },
     });
   }
