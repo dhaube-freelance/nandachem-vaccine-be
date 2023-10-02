@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from '../../../src/prisma.service';
 import { calculateAge } from '.';
 
 export const getAgeGroup = async (
@@ -26,6 +26,10 @@ export const getAgeGroup = async (
   const ageGroup = ageGroups.find(({ minAge, maxAge }) => {
     return age >= minAge && age <= maxAge;
   });
+
+  if (!ageGroup) {
+    throw new NotFoundException('appropriate age-group not found');
+  }
 
   return { age, ageGroupId: ageGroup.id };
 };

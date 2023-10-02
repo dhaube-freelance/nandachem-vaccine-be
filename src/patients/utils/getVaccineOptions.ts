@@ -4,27 +4,37 @@ import {
   PatientVaccine,
 } from '@prisma/client';
 import { calculateDaysDifference } from '.';
+import { BadRequestException } from '@nestjs/common';
 
-export const getVaccineOptions = async (
+export const getVaccineOptions = (
   record: PatientVaccine & { patient: Patient } & {ageGroup: AgeGroup},
 ) => {
+
+  const date = record?.date;
+  const doseNumber = record?.doseNumber;
+  const ageGroup = record.ageGroup;
+
+  if( !date || !doseNumber || !ageGroup) {
+    throw new BadRequestException('Invalid patient-vaccine record');
+  }
+
   const daysSinceLastDose = calculateDaysDifference(
-    record.date.toString()
+    date.toString()
   );
 
-  const gapsInDays = record.ageGroup.gapsInDays?.split(',');
-  const currentDose = Number(record.doseNumber);
+  const gapsInDays = ageGroup.gapsInDays?.split(',');
+  const currentDose = Number(doseNumber);
   const currentGap = Number(gapsInDays[currentDose - 1]); // - 1 since array start from 0
 
   const nextDose = currentDose + 1;
   let expected = false;
   let overdue = false;
 
-  if(currentGap - 15 < daysSinceLastDose) {
+  if(daysSinceLastDose > currentGap - 15) {
     expected = true;
   }
 
-  if(currentGap + 15 < daysSinceLastDose)  {
+  if(daysSinceLastDose  > currentGap + 15 )  {
     overdue = true;
   }
 
@@ -36,7 +46,7 @@ export const getVaccineOptions = async (
     overdue: boolean;
   }[] = [];
 
-  for (let i = 1; i <= record.ageGroup.numberOfDose; i++) {
+  for (let i = 1; i <= ageGroup.numberOfDose; i++) {
     vaccineOptions.push({
       number: i,
       completed: i < nextDose,
