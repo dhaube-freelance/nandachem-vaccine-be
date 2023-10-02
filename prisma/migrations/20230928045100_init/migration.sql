@@ -28,7 +28,7 @@ CREATE TABLE `Batch` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Dose` (
+CREATE TABLE `AgeGroup` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `minAge` INTEGER NOT NULL,
     `maxAge` INTEGER NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE `Dose` (
     `gapsInDays` VARCHAR(191) NOT NULL,
     `vaccineId` INTEGER NOT NULL,
 
-    INDEX `Dose_vaccineId_idx`(`vaccineId`),
+    INDEX `AgeGroup_vaccineId_idx`(`vaccineId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -59,13 +59,27 @@ CREATE TABLE `Patient` (
     `number` VARCHAR(191) NOT NULL,
     `gender` ENUM('MALE', 'FEMALE', 'OTHERS') NOT NULL DEFAULT 'MALE',
     `dob` DATETIME(3) NOT NULL,
-    `firstVaccinationDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `dosesTaken` INTEGER NOT NULL DEFAULT 1,
     `street` VARCHAR(191) NULL,
     `userId` INTEGER NOT NULL,
-    `batchId` INTEGER NULL,
 
-    INDEX `Patient_batchId_idx`(`batchId`),
     INDEX `Patient_userId_idx`(`userId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PatientVaccine` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `date` DATETIME(3) NOT NULL,
+    `doseNumber` INTEGER NOT NULL,
+    `age` INTEGER NOT NULL,
+    `vaccineId` INTEGER NOT NULL,
+    `batchId` INTEGER NOT NULL,
+    `ageGroupId` INTEGER NOT NULL,
+    `patientId` INTEGER NOT NULL,
+
+    INDEX `PatientVaccine_vaccineId_idx`(`vaccineId`),
+    INDEX `PatientVaccine_batchId_idx`(`batchId`),
+    INDEX `PatientVaccine_ageGroupId_idx`(`ageGroupId`),
+    INDEX `PatientVaccine_patientId_idx`(`patientId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

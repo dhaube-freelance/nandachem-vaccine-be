@@ -1,11 +1,23 @@
-import { IsNotEmpty, IsNumber } from "class-validator";
+import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 
 export class CompleteDoseDto {
+    @IsString()
+    @IsNotEmpty()
+    dob: string;
+  
     @IsNumber()
     @IsNotEmpty()
-    id: number;
+    doseNumber: number;
 
     @IsNumber()
     @IsNotEmpty()
-    dosesTaken: number;
+    patientId: number;
+
+    @IsNumber()
+    @IsNotEmpty()
+    batchId: number;
+
+    @IsNumber()
+    @IsNotEmpty()
+    vaccineId: number;
 }

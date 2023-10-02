@@ -7,7 +7,8 @@ import {
   Param,
   Delete,
   UseGuards,
-  Request, 
+  Request,
+  Req, 
 } from '@nestjs/common';
 import { PatientsService } from './patients.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
@@ -36,8 +37,8 @@ export class PatientsController {
   }
 
   @Post('/complete-dose')
-  completeDose(@Body() { id, dosesTaken }:CompleteDoseDto) {
-    return this.patientsService.completeDose(+id, dosesTaken);
+  completeDose(@Body() completeDoseDto :CompleteDoseDto, @Req() req) {
+    return this.patientsService.completeDose(completeDoseDto, req.user.id);
   }
 
   @Get(':id')

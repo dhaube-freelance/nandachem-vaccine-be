@@ -1,4 +1,9 @@
+import { BadRequestException } from '@nestjs/common';
+
 export const calculateAge = (dob: string) => {
+  if (isNaN(Date.parse(dob))) {
+    throw new BadRequestException('invalid date');
+  }
 
   // Calculate the difference in milliseconds
   const ageInMilliseconds = Date.parse(new Date().toString()) - Date.parse(dob);
@@ -13,4 +18,4 @@ export const calculateAge = (dob: string) => {
   const roundedAge = Math.floor(ageInYears);
 
   return roundedAge;
-}
+};
