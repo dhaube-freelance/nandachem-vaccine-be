@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../../src/prisma.service';
+import { PrismaService } from '../../prisma.service';
 import { calculateAge } from '.';
 
 export const getAgeGroup = async (
