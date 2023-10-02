@@ -2,13 +2,13 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { CreatePatientDto } from './dto/create-patient.dto';
-import { UpdatePatientDto } from './dto/update-patient.dto';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma.service';
-import { getAgeGroup, getVaccineOptions } from './utils';
-import { CompleteDoseDto } from './dto/complete-dose.dto';
+} from "@nestjs/common";
+import { CreatePatientDto } from "./dto/create-patient.dto";
+import { UpdatePatientDto } from "./dto/update-patient.dto";
+import { Prisma } from "@prisma/client";
+import { PrismaService } from "../prisma.service";
+import { getAgeGroup, getVaccineOptions } from "./utils";
+import { CompleteDoseDto } from "./dto/complete-dose.dto";
 
 @Injectable()
 export class PatientsService {
@@ -19,14 +19,14 @@ export class PatientsService {
       data;
 
     if (isNaN(Date.parse(dob))) {
-      throw new BadRequestException('invalid date');
+      throw new BadRequestException("invalid date");
     }
 
     if (!userId) {
-      throw new BadRequestException('invalid userId');
+      throw new BadRequestException("invalid userId");
     }
-    
-    const {age, ageGroupId} = await getAgeGroup(this.prisma, vaccineId, dob)
+
+    const { age, ageGroupId } = await getAgeGroup(this.prisma, vaccineId, dob);
 
     return this.prisma.patient.create({
       data: {
@@ -45,7 +45,7 @@ export class PatientsService {
             batchId,
             userId,
             age,
-            ageGroupId
+            ageGroupId,
           },
         },
       },
@@ -56,7 +56,7 @@ export class PatientsService {
     const records = await this.prisma.patientVaccine.findMany({
       where: {
         patient: {
-          number
+          number,
         },
       },
       include: {
@@ -65,25 +65,25 @@ export class PatientsService {
         batch: true,
         vaccine: {
           include: {
-            ageGroups: true
-          }
-        }
+            ageGroups: true,
+          },
+        },
       },
     });
 
     if (!records || !records.length) {
-      throw new NotFoundException('record not found');
+      throw new NotFoundException("record not found");
     }
 
     let latestRecord = records[0];
 
-    records.forEach(record => {
-      if(record.doseNumber > latestRecord.doseNumber) {
+    records.forEach((record) => {
+      if (record.doseNumber > latestRecord.doseNumber) {
         latestRecord = record;
       }
-    })
+    });
 
-    const { nextDose, vaccineOptions } = await getVaccineOptions( latestRecord)
+    const { nextDose, vaccineOptions } = await getVaccineOptions(latestRecord);
 
     return {
       latestRecord,
@@ -92,10 +92,12 @@ export class PatientsService {
     };
   }
 
-  async completeDose({dob, doseNumber, batchId, patientId, vaccineId }: CompleteDoseDto, userId: number) {
-    
-    const {age, ageGroupId} = await getAgeGroup(this.prisma, vaccineId, dob);
-    
+  async completeDose(
+    { dob, doseNumber, batchId, patientId, vaccineId }: CompleteDoseDto,
+    userId: number
+  ) {
+    const { age, ageGroupId } = await getAgeGroup(this.prisma, vaccineId, dob);
+
     return this.prisma.patientVaccine.create({
       data: {
         age,
@@ -111,7 +113,34 @@ export class PatientsService {
   }
 
   findAll() {
-    return this.prisma.patient.findMany();
+    return this.prisma.$queryRaw`SELECT
+        p.id,
+        p.name,
+        p.email,
+        p.number,
+        p.gender ,
+        p.dob,
+        p.street, 
+        MAX(pv.doseNumber) AS "doseNumber",
+        ag.numberOfDose AS "availableDoses",
+        ag.gapsInDays,
+        MAX(pv.date) AS "date"
+      FROM
+        PatientVaccine pv
+      LEFT JOIN Patient p ON
+        p.id = pv.patientId
+      LEFT JOIN AgeGroup ag ON
+        ag.id = pv.ageGroupId
+      GROUP BY
+        p.id,
+        p.name,
+        p.email,
+        p.number,
+        p.gender ,
+        p.dob,
+        p.street,
+        ag.numberOfDose,
+        ag.gapsInDays;`;
   }
 
   findOne(where: Prisma.PatientWhereUniqueInput) {
