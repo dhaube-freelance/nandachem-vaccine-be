@@ -6,7 +6,7 @@ import {
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '../../src/prisma.service';
+import { PrismaService } from '../prisma.service';
 import { getAgeGroup, getVaccineOptions } from './utils';
 import { CompleteDoseDto } from './dto/complete-dose.dto';
 

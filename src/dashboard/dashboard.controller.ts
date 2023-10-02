@@ -7,8 +7,9 @@ import {
   Query,
 } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
-import { NormalGuard } from 'src/auth/normal.guard';
+import { NormalGuard } from '../auth/normal.guard';
 import { AnalyticsDto } from './dto/analytics.dto';
+import { DoseCountDto } from './dto/dose-count.dto';
 
 @Controller('dashboard')
 @UseGuards(NormalGuard)
@@ -28,12 +29,14 @@ export class DashboardController {
   }
 
   @Get('dose-count')
-  getDoseCounts(@Query('vaccineId') vaccineId: string, @Request() req) {
+  getDoseCounts(@Query() query: DoseCountDto, @Request() req) {
+    const {vaccineId, type = "MONTH"} = query;
+
     if (!vaccineId) {
-      throw new BadRequestException();
+      throw new BadRequestException('vaccineId is required');
     }
 
-    return this.dashboardService.getDoseCounts(+vaccineId, Number(req.user.id));
+    return this.dashboardService.getDoseCounts(+vaccineId, type, Number(req.user.id));
   }
 
   @Get('dose-analytics')

@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma.service";
 
 @Injectable()
 export class DashboardService {
@@ -14,7 +14,7 @@ export class DashboardService {
     const ageGroups = vaccine.ageGroups;
 
     if (!ageGroups || !ageGroups.length) {
-      throw new NotFoundException('could not find doses for given vaccine');
+      throw new NotFoundException("could not find doses for given vaccine");
     }
 
     let completed = 0;
@@ -26,12 +26,12 @@ export class DashboardService {
       const lastYear = new Date(
         today.getFullYear() - 1,
         today.getMonth(),
-        today.getDate(),
+        today.getDate()
       );
 
       // TODO: check this value
       const _totalRecords = await this.prisma.patientVaccine.groupBy({
-        by: ['patientId', 'vaccineId'],
+        by: ["patientId", "vaccineId"],
         where: {
           date: {
             gte: lastYear,
@@ -67,7 +67,11 @@ export class DashboardService {
     return { completed, total };
   }
 
-  async getDoseCounts(vaccineId: number, userId: number) {
+  async getDoseCounts(
+    vaccineId: number,
+    type: "WEEK" | "MONTH",
+    userId: number,
+  ) {
     const vaccine = await this.prisma.vaccine.findUnique({
       where: { id: vaccineId },
       include: { ageGroups: true },
@@ -76,7 +80,7 @@ export class DashboardService {
     const ageGroups = vaccine.ageGroups;
 
     if (!ageGroups || !ageGroups.length) {
-      throw new NotFoundException('could not find doses for given vaccine');
+      throw new NotFoundException("could not find doses for given vaccine");
     }
 
     let maxDose = 0;
@@ -89,15 +93,28 @@ export class DashboardService {
 
     const count: number[] = [];
 
+    const today = new Date();
+    const _gte =
+      type === "MONTH"
+        ? new Date(today.getFullYear(), today.getMonth() - 1, 1)
+        : new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate() - today.getDay()
+          );
+
     for (let i = 1; i <= maxDose; i++) {
       count.push(
         await this.prisma.patientVaccine.count({
           where: {
+            date: {
+              gte: _gte,
+            },
             vaccineId,
             doseNumber: i,
             userId,
           },
-        }),
+        })
       );
     }
 
@@ -107,8 +124,8 @@ export class DashboardService {
   async getDoseAnalytics(
     vaccineId: number,
     doseNumber: number,
-    type: 'WEEK' | 'MONTH',
-    userId: number,
+    type: "WEEK" | "MONTH",
+    userId: number
   ) {
     const ANALYTICS_COUNT = 6;
 
@@ -117,30 +134,30 @@ export class DashboardService {
     });
 
     if (!vaccine) {
-      throw new NotFoundException('vaccine not found');
+      throw new NotFoundException("vaccine not found");
     }
 
     const counts: number[] = [];
 
-    for (let i = 1; i <= ANALYTICS_COUNT; i++) {
+    for (let i = ANALYTICS_COUNT - 1; i >= 0; i--) {
       const today = new Date();
 
       const _gte =
-        type === 'MONTH'
+        type === "MONTH"
           ? new Date(today.getFullYear(), today.getMonth() - i, 1)
           : new Date(
               today.getFullYear(),
               today.getMonth(),
-              today.getDate() - today.getDay() - (i * 7), // - today.getDay() for start of the week i.e. Sunday
+              today.getDate() - today.getDay() - i * 7
             );
 
       const _lte =
-        type === 'MONTH'
-          ? new Date(today.getFullYear(), today.getMonth(), 0) // 0 will make the last day of previous month
+        type === "MONTH"
+          ? new Date(today.getFullYear(), today.getMonth() - i + 1, 0) // 0 will make the last day of previous month
           : new Date(
               today.getFullYear(),
               today.getMonth(),
-              today.getDate() - today.getDay() - ((i - 1) * 7),
+              today.getDate() - today.getDay() - (i - 1) * 7
             );
 
       counts.push(
@@ -154,7 +171,7 @@ export class DashboardService {
             doseNumber,
             userId,
           },
-        }),
+        })
       );
     }
 

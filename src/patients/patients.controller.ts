@@ -14,7 +14,7 @@ import { PatientsService } from './patients.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { CompleteDoseDto } from './dto/complete-dose.dto';
-import { NormalGuard } from 'src/auth/normal.guard';
+import { NormalGuard } from '../auth/normal.guard';
 
 @Controller('patients')
 @UseGuards(NormalGuard)
